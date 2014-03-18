@@ -977,7 +977,9 @@ interface Options {
             shift = info.shift
             height = info.height
           }
-          teamCon.append(connector(height, shift, teamCon, align));
+            if (!opts.skipConnectors) {
+                teamCon.append(connector(height, shift, teamCon, align));
+            }
         },
         winner: function() { return matchWinner(match) },
         loser: function() { return matchLoser(match) },
@@ -1179,6 +1181,7 @@ interface Options {
       opts.dir = opts.dir || 'lr'
       opts.init.teams = !opts.init.teams || opts.init.teams.length == 0 ? [["", ""]] : opts.init.teams
       opts.skipConsolationRound = opts.skipConsolationRound || false
+      opts.skipConnectors = opts.skipConnectors || false;
       opts.skipSecondaryFinal = opts.skipSecondaryFinal || false
       if (opts.dir !== 'lr' && opts.dir !== 'rl')
         $.error('Direction must be either: "lr" or "rl"')
