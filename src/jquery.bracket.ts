@@ -126,32 +126,41 @@ interface Options {
      return {source: null, name: null, id: -1, idx: -1, score: null}
   }
 
-  function teamsInResultOrder(match, lowScoreWins) {
-    if (isNumber(match.a.score) && isNumber(match.b.score)) {
-      if (match.a.score > match.b.score)
-      {
-        if (!lowScoreWins) {
-          return [match.a, match.b]
-        } else {
-          return [match.b, match.a]
+  function teamsInResultOrder(match, lowScoreWins, textMarksWinner) {
+    if (!textMarksWinner) {
+      if (isNumber(match.a.score) && isNumber(match.b.score)) {
+        if (match.a.score > match.b.score)
+        {
+          if (!lowScoreWins) {
+            return [match.a, match.b]
+          } else {
+            return [match.b, match.a]
+          }
+        } else if (match.a.score < match.b.score) {
+          if (!lowScoreWins) {
+            return [match.b, match.a]
+          } else {
+            return [match.a, match.b]
+          }
         }
-      } else if (match.a.score < match.b.score) {
-        if (!lowScoreWins) {
-          return [match.b, match.a]
-        } else {
-          return [match.a, match.b]
-        }
+      }
+    } else {
+      if (match.a.score) {
+        return [match.a, match.b]
+      }
+      if (match.b.score) {
+        return [match.b, match.a]
       }
     }
     return []
   }
 
-  function matchWinner(match: MatchResult, lowScoreWins): TeamBlock {
-    return teamsInResultOrder(match, lowScoreWins)[0] || emptyTeam()
+  function matchWinner(match: MatchResult, lowScoreWins, textMarksWinner): TeamBlock {
+    return teamsInResultOrder(match, lowScoreWins, textMarksWinner)[0] || emptyTeam()
   }
 
-  function matchLoser(match: MatchResult, lowScoreWins): TeamBlock {
-    return teamsInResultOrder(match, lowScoreWins)[1] || emptyTeam()
+  function matchLoser(match: MatchResult, lowScoreWins, textMarksWinner): TeamBlock {
+    return teamsInResultOrder(match, lowScoreWins, textMarksWinner)[1] || emptyTeam()
   }
 
   function trackHighlighter(teamIndex: number, cssClass: string, container: JQuery) {
@@ -791,7 +800,15 @@ interface Options {
         }
         else {
           if (!isNumber(team.score)) {
-            score = '--'
+            if (!opts.textMarksWinner) {
+              score = '--'
+            } else {
+              if (team.score) {
+                score = team.score
+              } else {
+                score = '--'
+              }
+            }
           } else {
             score = team.score
           }
@@ -814,9 +831,9 @@ interface Options {
 
         if (team.name === null)
           tEl.addClass('na')
-        else if (matchWinner(match, opts.lowScoreWins).name === team.name)
+        else if (matchWinner(match, opts.lowScoreWins, opts.textMarksWinner).name === team.name)
           tEl.addClass('win')
-        else if (matchLoser(match, opts.lowScoreWins).name === team.name)
+        else if (matchLoser(match, opts.lowScoreWins, opts.textMarksWinner).name === team.name)
           tEl.addClass('lose')
 
         tEl.append(sEl)
@@ -991,8 +1008,8 @@ interface Options {
                 teamCon.append(connector(height, shift, teamCon, align));
             }
         },
-        winner: function() { return matchWinner(match, opts.lowScoreWins) },
-        loser: function() { return matchLoser(match, opts.lowScoreWins) },
+        winner: function() { return matchWinner(match, opts.lowScoreWins, opts.textMarksWinner) },
+        loser: function() { return matchLoser(match, opts.lowScoreWins, opts.textMarksWinner) },
         first: function(): TeamBlock {
           return match.a
         },
@@ -1016,7 +1033,7 @@ interface Options {
               (match.b.name || match.b.name === ''))
             isReady = true
 
-          if (!matchWinner(match, opts.lowScoreWins).name)
+          if (!matchWinner(match, opts.lowScoreWins, opts.textMarksWinner).name)
             teamCon.addClass('np')
           else
             teamCon.removeClass('np')
@@ -1193,7 +1210,10 @@ interface Options {
       opts.skipConsolationRound = opts.skipConsolationRound || false
       opts.skipConnectors = opts.skipConnectors || false;
       opts.lowScoreWins = opts.lowScoreWins || false;
+      opts.textMarksWinner= opts.textMarksWinner || false;
       opts.skipSecondaryFinal = opts.skipSecondaryFinal || false
+      if (opts.lowScoreWins && opts.textMarksWinter)
+        $.error('lowScoreWins and textMarksWinter are both enabled, ignoring lowScoreWins');
       if (opts.dir !== 'lr' && opts.dir !== 'rl')
         $.error('Direction must be either: "lr" or "rl"')
       var bracket = JqueryBracket(opts)
